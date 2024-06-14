@@ -133,7 +133,7 @@ def process_key_press(stdscr, i, j, ui_grid, ui_map, icon, on_indices, tempo_del
         else:
             sound_on[np.unravel_index(ui_map[i, j]-1, sound_on.shape)] = 1
             on_indices.add(ui_map[i, j])
-    elif key == ord('='):
+    elif key == ord('+'):
         n_subdiv_samples -= tempo_delta_samples
         if n_subdiv_samples <= 0:
             n_subdiv_samples += 2*tempo_delta_samples
