@@ -122,7 +122,7 @@ def draw_grid(stdscr, icon, on_indices, i, j):
     return ui_grid, ui_map
 
 def process_key_press(stdscr, i, j, ui_grid, ui_map, icon, on_indices, tempo_delta_samples = 100):
-    global n_subdiv_samples, sound_on, bpm
+    global n_samples_subdiv, sound_on, bpm
     key = stdscr.getch()
     i, j = get_arrow_key_input(key, i, j, ui_map)
     i, j = limit_arrow_key_input(i, j, ui_grid.shape[0]-icon.shape[0], ui_grid.shape[1]-icon.shape[1])
@@ -134,14 +134,14 @@ def process_key_press(stdscr, i, j, ui_grid, ui_map, icon, on_indices, tempo_del
             sound_on[np.unravel_index(ui_map[i, j]-1, sound_on.shape)] = 1
             on_indices.add(ui_map[i, j])
     elif key == ord('+'):
-        n_subdiv_samples -= tempo_delta_samples
-        if n_subdiv_samples <= 0:
-            n_subdiv_samples += 2*tempo_delta_samples
-        bpm = int(60*samplerate/n_subdiv_samples/4)
+        n_samples_subdiv -= tempo_delta_samples
+        if n_samples_subdiv <= 0:
+            n_samples_subdiv += 2*tempo_delta_samples
+        bpm = int(60*samplerate/n_samples_subdiv/4)
 
     elif key == ord('-'):
-        n_subdiv_samples += tempo_delta_samples
-        bpm = int(60*samplerate/n_subdiv_samples/4)
+        n_samples_subdiv += tempo_delta_samples
+        bpm = int(60*samplerate/n_samples_subdiv/4)
 
     elif key == ord('r'):
         sound_on = np.random.randint(low=0, high=2, size=(n_instruments, single_instrument_layout.count(1)))
@@ -184,14 +184,14 @@ def build_ui(stdscr):
         stdscr.refresh() # stdscr.erase() # stdscr.clear()
 
 def get_superposition():
-    out = np.zeros((sound_on.shape[0], n_subdiv_samples*sound_on.shape[1]))
+    out = np.zeros((sound_on.shape[0], n_samples_subdiv*sound_on.shape[1]))
     for m in range(sound_on.shape[0]):
         for n in range(sound_on.shape[1]):
             if sound_on[m, n] == 1:
-                if n_subdiv_samples*n+len(waveforms[m]) > n_subdiv_samples*(n+1):
-                    out[m, n_subdiv_samples*n : n_subdiv_samples*(n+1)] += waveforms[m][:n_subdiv_samples]
+                if n_samples_subdiv*n+len(waveforms[m]) > n_samples_subdiv*(n+1):
+                    out[m, n_samples_subdiv*n : n_samples_subdiv*(n+1)] += waveforms[m][:n_samples_subdiv]
                 else:
-                    out[m, n_subdiv_samples*n : n_subdiv_samples*n+len(waveforms[m])] += waveforms[m]
+                    out[m, n_samples_subdiv*n : n_samples_subdiv*n+len(waveforms[m])] += waveforms[m]
     return out
 
 def play_audio():
@@ -266,7 +266,7 @@ samplerate = get_samplerate()
 stream = sd.OutputStream(channels=n_channels, callback=callback, samplerate=samplerate, device=3)
 
 bpm = 120
-n_subdiv_samples = int(samplerate // 8) # 120 BPM, 16th note subdiv
+n_samples_subdiv = int(samplerate/(bpm/60)/4) # beat divided by 4 --> 16th note subdiv
 
 if args.online:
     waveforms = samples.get_waveforms()
